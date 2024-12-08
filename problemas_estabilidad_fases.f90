@@ -253,6 +253,51 @@ contains
 
     end function sistema_02
 
+        ! n-Acetato de butilo + agua NRTL
+    function sistema_04(w) result(respuesta)
+        ! n-Acetato de butilo + agua NRTL
+        ! x* = 0.0042086615362195347  
+        ! f* = -0.032638313157465078
+
+        ! McDonald C. M. and Floudas C. A. (1994). 
+        ! Global Optimization for the phase stability problem. 
+        ! AIChE Journal, 41(7), 1798-1814. Doi: 10.1002/aic.690410715
+
+        double precision :: respuesta
+        double precision, dimension(:), intent(in) :: w
+        double precision, dimension(:), allocatable :: x
+        double precision, dimension(:), allocatable:: lngx, lngz 
+
+        double precision :: criterio
+        integer, parameter :: cantidad_variables = 2
+        double precision, parameter :: z(2) = [0.5, 0.5]
+        double precision, parameter :: tau(2, 2) = reshape([ &
+        0.0, 3.00498, &
+        4.69071, 0.0], shape=[2, 2])
+
+        double precision, parameter :: G(2, 2) = reshape([ &
+        1.0, 0.30800, &
+        0.15909, 1.0], shape=[2, 2])
+
+        allocate(x(cantidad_variables))
+        allocate(lngx(cantidad_variables))
+        allocate(lngz(cantidad_variables))
+
+        x = [w(1), 1 - w(1)]
+
+        lngx = ln_gamma_nrtl(x, tau, G)
+        lngz = ln_gamma_nrtl(z, tau, G)
+
+        criterio = sum(pack(x, x < 0))
+
+        if (criterio < 0) then 
+            respuesta = - criterio * 10.0E5
+        else 
+            respuesta = sum(x * (log(x) + lngx - log(z) - lngz))
+        end if
+
+    end function sistema_04
+
         ! C1 + C2 + C3 + iC4 + C4 + iC5 + C5 + C6 + iC15, SRK
     function sistema_05(y) result(respuesta)
         ! C1 + C2 + C3 + iC4 + C4 + iC5 + C5 + C6 + iC15, SRK
@@ -505,6 +550,196 @@ contains
         end if
 
     end function sistema_10
+
+        ! C1 + C3, SRK
+    function sistema_12(y) result(respuesta)
+        ! C1 + C3, SRK
+        ! x* = 0.19276444431534911      
+        ! f* = -0.22262682176770848
+
+        ! Hua, J. Z., Brennecke, J. F., & Stadtherr, M. A. (1998). 
+        ! Reliable computation of phase stability using interval analysis. 
+        ! Computers & Chemical Engineering, 22(9), 1207–1214. doi:10.1016/s0098-1354(98)00024-6
+        
+        double precision :: respuesta
+        double precision, dimension(:), intent(in) :: y
+        double precision, dimension(:), allocatable :: x
+        double precision, dimension(:), allocatable:: ln_phi_x, ln_phi_z 
+
+        double precision :: criterio
+        integer, parameter :: cantidad_variables = 2
+        double precision :: P = 50.0, T = 277.6
+        double precision, parameter :: z(2) = [0.6, 0.4]
+        double precision, parameter :: Tc(2) = [190.6, 369.8]
+        double precision, parameter :: Pc(2) = [46.0, 42.5]
+        double precision, parameter :: w(2) = [0.008, 0.152]
+        double precision, parameter :: k(2, 2) = reshape([ &
+        0.0, 0.029, &
+        0.029, 0.0], shape=[2, 2])
+
+        allocate(x(cantidad_variables))
+        allocate(ln_phi_x(cantidad_variables))
+        allocate(ln_phi_z(cantidad_variables))
+
+        x = [y(1), 1 - y(1)]
+
+        ln_phi_x = ln_phi_srk(x, Tc, Pc, w, k, P, T)
+        ln_phi_z = ln_phi_srk(z, Tc, Pc, w, k, P, T)
+
+        criterio = sum(pack(x, x < 0))
+
+        if (criterio < 0) then 
+            respuesta = - criterio * 10.0E5
+        else 
+            respuesta = sum(x * (log(x) + ln_phi_x - log(z) - ln_phi_z))
+        end if
+
+    end function sistema_12
+
+        ! n-Propanol + n-butanol + benceno + agua, NRTL
+    function sistema_13(w) result(respuesta)
+        ! n-Propanol + n-butanol + benceno + agua, NRTL
+        ! x* = 0.018114780903023944, 0.00061999525113539625, 0.0044844004034368520, 0.42237505492523608      
+        ! f* = -0.33982213819701940
+
+        ! Tessier S. R., Brennecke J. F. and Stadtherr M. A. (2000). 
+        ! Reliable phase stability analysis for excess Gibbs energy models. 
+        ! Chemical Engineering Science, 55(10), 1785-1796. Doi: 10.1016/s0009-2509(99)00442-x
+
+        double precision :: respuesta
+        double precision, dimension(:), intent(in) :: w
+        double precision, dimension(:), allocatable :: x
+        double precision, dimension(:), allocatable:: lngx, lngz 
+
+        double precision :: criterio
+        integer, parameter :: cantidad_variables = 4
+        double precision, parameter :: z(4) = [0.148, 0.052, 0.60, 0.20]
+        double precision, parameter :: tau(4, 4) = reshape([ &
+        0.0, 2.16486, 0.23689, 0.13060, &
+        -1.2007, 0.0, -0.09730, 0.19154, &
+        2.01911, 1.73912, 0.0, 4.01932, &
+        2.31985, 4.31706, 4.09334, 0.0], shape=[4, 4])
+        double precision, parameter :: G(4, 4) = reshape([ &
+        1.0, 0.34320, 0.93449, 0.96384, &
+        1.80967, 1.0, 1.02932, 0.93623, &
+        0.56132, 0.59659, 1.0, 0.32322, &
+        0.51986, 0.22649, 0.31656, 1.0], shape=[4, 4])
+
+        allocate(x(cantidad_variables))
+        allocate(lngx(cantidad_variables))
+        allocate(lngz(cantidad_variables))
+
+        x = [w(1), w(2), w(3), 1 - w(1) - w(2) - w(3)]
+
+        lngx = ln_gamma_nrtl(x, tau, G)
+        lngz = ln_gamma_nrtl(z, tau, G)
+
+        criterio = sum(pack(x, x < 0))
+
+        if (criterio < 0) then 
+            respuesta = - criterio * 10.0E5
+        else 
+            respuesta = sum(x * (log(x) + lngx - log(z) - lngz))
+        end if
+
+    end function sistema_13
+
+        ! n-Propanol + n-butanol + benceno + etanol + agua, NRTL
+    function sistema_14(w) result(respuesta)
+        ! n-Propanol + n-butanol + benceno + etanol + agua, NRTL
+        ! x* = 0.024314644551625304, 0.00054503387520804633, 0.0017265770398075587, 0.035514954118328224, 0.57410251482629460      
+        ! f* = -0.10430190637039251
+
+        ! Tessier S. R., Brennecke J. F. and Stadtherr M. A. (2000). 
+        ! Reliable phase stability analysis for excess Gibbs energy models. 
+        ! Chemical Engineering Science, 55(10), 1785-1796. Doi: 10.1016/s0009-2509(99)00442-x
+
+        double precision :: respuesta
+        double precision, dimension(:), intent(in) :: w
+        double precision, dimension(:), allocatable :: x
+        double precision, dimension(:), allocatable:: lngx, lngz 
+
+        double precision :: criterio
+        integer, parameter :: cantidad_variables = 5
+        double precision, parameter :: z(5) = [0.148, 0.052, 0.50, 0.10, 0.20]
+        double precision, parameter :: tau(5, 5) = reshape([ &
+        0.0, 2.16486, 0.23686, 3.78001, 0.13060, &
+        -1.20070, 0.0, -0.09730, -1.15187, -0.20374, &
+        2.01911, 1.73912, 0.0, 1.85228, 3.73758, &
+        -0.10979, 1.16315, 0.47676, 0.0, -0.14651, &
+        2.31985, 5.22337, 6.45226, 2.17820, 0.0], shape=[5, 5])
+        double precision, parameter :: G(5, 5) = reshape([ &
+        1.0, 0.34320, 0.93450, 0.35902, 0.96384, &
+        3.91873, 1.0, 1.02931, 1.41931, 1.06238, &
+        0.56132, 0.59670, 1.0, 0.57907, 0.36864, &
+        1.03030, 0.70216, 0.86880, 1.0, 1.04035, &
+        0.51986, 0.21196, 0.17857, 0.55537, 1.0], shape=[5, 5])
+
+        allocate(x(cantidad_variables))
+        allocate(lngx(cantidad_variables))
+        allocate(lngz(cantidad_variables))
+
+        x = [w(1), w(2), w(3), w(4), 1 - w(1) - w(2) - w(3) - w(4)]
+
+        lngx = ln_gamma_nrtl(x, tau, G)
+        lngz = ln_gamma_nrtl(z, tau, G)
+
+        criterio = sum(pack(x, x < 0))
+
+        if (criterio < 0) then 
+            respuesta = - criterio * 10.0E5
+        else 
+            respuesta = sum(x * (log(x) + lngx - log(z) - lngz))
+        end if
+
+    end function sistema_14
+
+        ! Ácido acético + benceno + furfural + ciclohexano + agua, UNIQUAC
+    function sistema_17(w) result(respuesta)
+        ! Ácido acético + benceno + furfural + ciclohexano + agua, UNIQUAC
+        ! x* =  0.22748543782080269, 0.0033447179085991561, 0.047502524800731014, 0.0015842688961442879 
+        ! f* = -0.17765416298801889
+
+        ! Tessier S. R., Brennecke J. F. and Stadtherr M. A. (2000). 
+        ! Reliable phase stability analysis for excess Gibbs energy models. 
+        ! Chemical Engineering Science, 55(10), 1785-1796. Doi: 10.1016/s0009-2509(99)00442-x
+
+        double precision :: respuesta
+        double precision, dimension(:), intent(in) :: w
+        double precision, dimension(:), allocatable :: x
+        double precision, dimension(:), allocatable:: lngx, lngz 
+
+        double precision :: criterio
+        integer, parameter :: cantidad_variables = 5
+        double precision, parameter :: z(5) = [0.2, 0.2, 0.2, 0.2, 0.2]
+        double precision, parameter :: r(5) = [2.2024, 3.1878, 3.1680, 4.0464, 0.9200]
+        double precision, parameter :: q(5) = [2.072, 2.400, 2.484, 3.240, 1.400]
+        double precision, parameter :: qq(5) = [2.072, 2.400, 2.484, 3.240, 1.400]
+        double precision, parameter :: tau(5, 5) = reshape([ &
+        1.0, 1.26362, 3.36860, 0.85128, 1.54662, &
+        0.99972, 1.0, 1.02041, 0.89333, 0.09441, &
+        0.31633, 0.79027, 1.0, 0.96249, 0.60488, &
+        0.49739, 1.09619, 0.26222, 1.0, 0.08839, &
+        2.44225, 0.13507, 0.69066, 0.19491, 1.0], shape=[5, 5])
+
+        allocate(x(cantidad_variables))
+        allocate(lngx(cantidad_variables))
+        allocate(lngz(cantidad_variables))
+
+        x = [w(1), w(2), w(3), w(4), 1 - w(1) - w(2) - w(3) - w(4)]
+
+        lngx = ln_gamma_uniquac(x, r, q, qq, tau)
+        lngz = ln_gamma_uniquac(z, r, q, qq, tau)
+
+        criterio = sum(pack(x, x < 0))
+
+        if (criterio < 0) then 
+            respuesta = - criterio * 10.0E5
+        else 
+            respuesta = sum(x * (log(x) + lngx - log(z) - lngz))
+        end if
+
+    end function sistema_17
 
         ! Agua + CO2 + 2-propanol + etanol, SRK
     function sistema_19(y) result(respuesta)
